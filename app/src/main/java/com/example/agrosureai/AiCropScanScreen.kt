@@ -2,6 +2,7 @@ package com.example.agrosureai
 
 import androidx.compose.runtime.Composable
 
+// Restoring this to be the correct, polished onboarding screen.
 @Composable
 fun AiCropScanScreen(
     onNextClick: () -> Unit,

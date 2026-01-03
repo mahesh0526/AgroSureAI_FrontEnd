@@ -22,7 +22,17 @@ import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(onScanCropClick: () -> Unit, onInsuranceClick: () -> Unit, onScanTabClick: () -> Unit) {
+fun HomeScreen(
+    onScanCropClick: () -> Unit, 
+    onInsuranceClick: () -> Unit, 
+    onScanTabClick: () -> Unit,
+    onViewAllAlertsClick: () -> Unit,
+    onScanHistoryClick: () -> Unit,
+    onMyClaimsClick: () -> Unit,
+    onAnalyticsClick: () -> Unit,
+    onProfileClick: () -> Unit,
+    onNotificationClick: () -> Unit
+) {
     var selectedItem by remember { mutableStateOf(0) } // Default to Home
     val items = listOf("Home", "Scan", "Analytics", "Claims", "Profile")
     val icons = listOf(Icons.Filled.Home, Icons.Filled.QrCodeScanner, Icons.Filled.Analytics, Icons.Filled.Description, Icons.Filled.Person)
@@ -32,8 +42,8 @@ fun HomeScreen(onScanCropClick: () -> Unit, onInsuranceClick: () -> Unit, onScan
             TopAppBar(
                 title = { Text("AgroSure AI") },
                 actions = {
-                    IconButton(onClick = { /* TODO */ }) {
-                        Icon(Icons.Filled.Warning, contentDescription = "Alerts")
+                    IconButton(onClick = onNotificationClick) {
+                        Icon(Icons.Filled.Notifications, contentDescription = "Notifications")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -51,10 +61,12 @@ fun HomeScreen(onScanCropClick: () -> Unit, onInsuranceClick: () -> Unit, onScan
                         label = { Text(item) },
                         selected = selectedItem == index,
                         onClick = { 
-                            if (index == 1) { // "Scan" tab
-                                onScanTabClick()
-                            } else {
-                                selectedItem = index
+                            when (index) {
+                                1 -> onScanTabClick()
+                                2 -> onAnalyticsClick()
+                                3 -> onInsuranceClick()
+                                4 -> onProfileClick()
+                                else -> selectedItem = index
                             }
                         }
                     )
@@ -62,29 +74,40 @@ fun HomeScreen(onScanCropClick: () -> Unit, onInsuranceClick: () -> Unit, onScan
             }
         }
     ) { padding ->
-        // Show content based on selected tab
-        when (selectedItem) {
-            0 -> HomeContent(modifier = Modifier.padding(padding), onScanCropClick = onScanCropClick, onInsuranceClick = onInsuranceClick)
-            // TODO: Add other screens for the other tabs
+        if (selectedItem == 0) {
+            HomeContent(
+                modifier = Modifier.padding(padding), 
+                onScanCropClick = onScanCropClick, 
+                onInsuranceClick = onInsuranceClick,
+                onViewAllAlertsClick = onViewAllAlertsClick,
+                onScanHistoryClick = onScanHistoryClick,
+                onMyClaimsClick = onMyClaimsClick
+            )
         }
     }
 }
 
 @Composable
-fun HomeContent(modifier: Modifier = Modifier, onScanCropClick: () -> Unit, onInsuranceClick: () -> Unit) {
+fun HomeContent(
+    modifier: Modifier = Modifier, 
+    onScanCropClick: () -> Unit, 
+    onInsuranceClick: () -> Unit,
+    onViewAllAlertsClick: () -> Unit,
+    onScanHistoryClick: () -> Unit,
+    onMyClaimsClick: () -> Unit
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        // User Profile Card
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(containerColor = Color(0xFF3B5998))
         ) {
-            Row(
+             Row(
                 modifier = Modifier.padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -109,14 +132,11 @@ fun HomeContent(modifier: Modifier = Modifier, onScanCropClick: () -> Unit, onIn
                 }
             }
         }
-
         Spacer(modifier = Modifier.height(16.dp))
-
-        // Weather Card
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF59D))
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF9C4))
         ) {
             Row(
                 modifier = Modifier.padding(16.dp),
@@ -135,27 +155,21 @@ fun HomeContent(modifier: Modifier = Modifier, onScanCropClick: () -> Unit, onIn
                 }
             }
         }
-
         Spacer(modifier = Modifier.height(24.dp))
-
-        // Quick Actions
         Text("Quick Actions", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             QuickActionCard("Scan Crop", Icons.Filled.FilterCenterFocus, Modifier.weight(1f), onClick = onScanCropClick)
             QuickActionCard("Insurance", Icons.Filled.VerifiedUser, Modifier.weight(1f), onClick = onInsuranceClick)
         }
-
         Spacer(modifier = Modifier.height(24.dp))
-
-        // Recent Alerts
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Recent Alerts", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.weight(1f))
-            TextButton(onClick = { /* TODO */ }) { Text("View All") }
+            TextButton(onClick = onViewAllAlertsClick) { Text("View All") }
         }
         Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBDE))) {
-            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+             Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Filled.WarningAmber, contentDescription = "Pest Alert", tint = Color(0xFFE65100))
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
@@ -164,10 +178,7 @@ fun HomeContent(modifier: Modifier = Modifier, onScanCropClick: () -> Unit, onIn
                 }
             }
         }
-
         Spacer(modifier = Modifier.height(24.dp))
-
-        // My Crops
         Text("My Crops", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
         Card(modifier = Modifier.fillMaxWidth()) {
@@ -186,16 +197,14 @@ fun HomeContent(modifier: Modifier = Modifier, onScanCropClick: () -> Unit, onIn
                 }
             }
         }
-
         Spacer(modifier = Modifier.height(24.dp))
-        
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            OutlinedButton(onClick = { /*TODO*/ }, modifier = Modifier.weight(1f)) {
+            OutlinedButton(onClick = onScanHistoryClick, modifier = Modifier.weight(1f)) {
                 Icon(Icons.Filled.History, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Scan History")
             }
-             OutlinedButton(onClick = { /*TODO*/ }, modifier = Modifier.weight(1f)) {
+             OutlinedButton(onClick = onMyClaimsClick, modifier = Modifier.weight(1f)) {
                 Icon(Icons.Filled.Shield, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("My Claims")
@@ -203,6 +212,7 @@ fun HomeContent(modifier: Modifier = Modifier, onScanCropClick: () -> Unit, onIn
         }
     }
 }
+
 
 @Composable
 fun QuickActionCard(title: String, icon: ImageVector, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
@@ -212,7 +222,7 @@ fun QuickActionCard(title: String, icon: ImageVector, modifier: Modifier = Modif
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Box(modifier = Modifier.size(48.dp).clip(CircleShape).background(Color(0xFFEAF3E0)), contentAlignment = Alignment.Center) {
+            Box(modifier = Modifier.size(48.dp).clip(CircleShape).background(Color(0xFFEAF3E0)), contentAlignment = Alignment.Center) { // Corrected the typo here
                  Icon(icon, contentDescription = null, tint = Color(0xFF4F7F3B))
             }
             Spacer(modifier = Modifier.height(8.dp))

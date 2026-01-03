@@ -2,30 +2,26 @@ package com.example.agrosureai
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LandDetailsScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
-    var landArea by remember { mutableStateOf("") }
-    var soilType by remember { mutableStateOf("") }
-    var irrigationType by remember { mutableStateOf("") }
-
-    val soilTypes = listOf("Black Soil", "Red Soil", "Alluvial Soil", "Laterite Soil")
-    val irrigationTypes = listOf("Drip", "Sprinkler", "Flood", "Canal")
-
-    var soilExpanded by remember { mutableStateOf(false) }
-    var irrigationExpanded by remember { mutableStateOf(false) }
+    var landArea by remember { mutableStateOf("2.5") }
     
-    val isNextEnabled = landArea.isNotBlank() && soilType.isNotBlank() && irrigationType.isNotBlank()
+    val soilTypes = listOf("Black Soil", "Red Soil", "Alluvial Soil", "Loam")
+    var soilTypeExpanded by remember { mutableStateOf(false) }
+    var selectedSoilType by remember { mutableStateOf(soilTypes[0]) }
+
+    val irrigationTypes = listOf("Drip", "Sprinkler", "Surface", "Canal")
+    var irrigationTypeExpanded by remember { mutableStateOf(false) }
+    var selectedIrrigationType by remember { mutableStateOf(irrigationTypes[0]) }
 
     Scaffold(
         topBar = {
@@ -54,48 +50,67 @@ fun LandDetailsScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
                 value = landArea,
                 onValueChange = { landArea = it },
                 label = { Text("Land Area (Acres)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            ExposedDropdownMenuBox(expanded = soilExpanded, onExpandedChange = { soilExpanded = !soilExpanded }) {
+            // Soil Type Dropdown
+            ExposedDropdownMenuBox(
+                expanded = soilTypeExpanded,
+                onExpandedChange = { soilTypeExpanded = !soilTypeExpanded }
+            ) {
                 OutlinedTextField(
-                    value = soilType,
+                    value = selectedSoilType,
                     onValueChange = {},
-                    readOnly = true,
                     label = { Text("Soil Type") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = soilExpanded) },
-                    modifier = Modifier.fillMaxWidth().menuAnchor()
+                    readOnly = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = soilTypeExpanded) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
-                ExposedDropdownMenu(expanded = soilExpanded, onDismissRequest = { soilExpanded = false }) {
+                ExposedDropdownMenu(
+                    expanded = soilTypeExpanded,
+                    onDismissRequest = { soilTypeExpanded = false }
+                ) {
                     soilTypes.forEach { type ->
-                        DropdownMenuItem(text = { Text(type) }, onClick = {
-                            soilType = type
-                            soilExpanded = false
-                        })
+                        DropdownMenuItem(
+                            text = { Text(type) },
+                            onClick = {
+                                selectedSoilType = type
+                                soilTypeExpanded = false
+                            }
+                        )
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            ExposedDropdownMenuBox(expanded = irrigationExpanded, onExpandedChange = { irrigationExpanded = !irrigationExpanded }) {
+            // Irrigation Type Dropdown
+            ExposedDropdownMenuBox(
+                expanded = irrigationTypeExpanded,
+                onExpandedChange = { irrigationTypeExpanded = !irrigationTypeExpanded }
+            ) {
                 OutlinedTextField(
-                    value = irrigationType,
+                    value = selectedIrrigationType,
                     onValueChange = {},
-                    readOnly = true,
                     label = { Text("Irrigation Type") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = irrigationExpanded) },
-                    modifier = Modifier.fillMaxWidth().menuAnchor()
+                    readOnly = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = irrigationTypeExpanded) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
-                ExposedDropdownMenu(expanded = irrigationExpanded, onDismissRequest = { irrigationExpanded = false }) {
+                ExposedDropdownMenu(
+                    expanded = irrigationTypeExpanded,
+                    onDismissRequest = { irrigationTypeExpanded = false }
+                ) {
                     irrigationTypes.forEach { type ->
-                        DropdownMenuItem(text = { Text(type) }, onClick = {
-                            irrigationType = type
-                            irrigationExpanded = false
-                        })
+                        DropdownMenuItem(
+                            text = { Text(type) },
+                            onClick = {
+                                selectedIrrigationType = type
+                                irrigationTypeExpanded = false
+                            }
+                        )
                     }
                 }
             }
@@ -104,13 +119,9 @@ fun LandDetailsScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
 
             Button(
                 onClick = onNextClick,
-                enabled = isNextEnabled,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isNextEnabled) Color(0xFF4F7F3B) else Color(0xFFA5D6A7),
-                    disabledContainerColor = Color(0xFFA5D6A7)
-                )
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F7F3B))
             ) {
                 Text("Next: Crop Details")
             }

@@ -13,16 +13,13 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CropDetailsScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
-    var cropName by remember { mutableStateOf("") }
-    var season by remember { mutableStateOf("") }
+    val cropNames = listOf("Wheat", "Rice", "Maize", "Soybean", "Cotton")
+    var cropNameExpanded by remember { mutableStateOf(false) }
+    var selectedCropName by remember { mutableStateOf(cropNames[0]) }
 
-    val cropNames = listOf("Wheat", "Rice", "Maize", "Cotton", "Sugarcane")
     val seasons = listOf("Kharif (Monsoon)", "Rabi (Winter)", "Zaid (Summer)")
-
-    var cropExpanded by remember { mutableStateOf(false) }
     var seasonExpanded by remember { mutableStateOf(false) }
-
-    val isNextEnabled = cropName.isNotBlank() && season.isNotBlank()
+    var selectedSeason by remember { mutableStateOf(seasons[0]) }
 
     Scaffold(
         topBar = {
@@ -47,42 +44,62 @@ fun CropDetailsScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            ExposedDropdownMenuBox(expanded = cropExpanded, onExpandedChange = { cropExpanded = !cropExpanded }) {
+            // Crop Name Dropdown
+            ExposedDropdownMenuBox(
+                expanded = cropNameExpanded,
+                onExpandedChange = { cropNameExpanded = !cropNameExpanded }
+            ) {
                 OutlinedTextField(
-                    value = cropName,
+                    value = selectedCropName,
                     onValueChange = {},
-                    readOnly = true,
                     label = { Text("Crop Name") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = cropExpanded) },
-                    modifier = Modifier.fillMaxWidth().menuAnchor()
+                    readOnly = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = cropNameExpanded) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
-                ExposedDropdownMenu(expanded = cropExpanded, onDismissRequest = { cropExpanded = false }) {
+                ExposedDropdownMenu(
+                    expanded = cropNameExpanded,
+                    onDismissRequest = { cropNameExpanded = false }
+                ) {
                     cropNames.forEach { name ->
-                        DropdownMenuItem(text = { Text(name) }, onClick = {
-                            cropName = name
-                            cropExpanded = false
-                        })
+                        DropdownMenuItem(
+                            text = { Text(name) },
+                            onClick = {
+                                selectedCropName = name
+                                cropNameExpanded = false
+                            }
+                        )
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            ExposedDropdownMenuBox(expanded = seasonExpanded, onExpandedChange = { seasonExpanded = !seasonExpanded }) {
+            // Season Dropdown
+            ExposedDropdownMenuBox(
+                expanded = seasonExpanded,
+                onExpandedChange = { seasonExpanded = !seasonExpanded }
+            ) {
                 OutlinedTextField(
-                    value = season,
+                    value = selectedSeason,
                     onValueChange = {},
-                    readOnly = true,
                     label = { Text("Season") },
+                    readOnly = true,
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = seasonExpanded) },
-                    modifier = Modifier.fillMaxWidth().menuAnchor()
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
-                ExposedDropdownMenu(expanded = seasonExpanded, onDismissRequest = { seasonExpanded = false }) {
-                    seasons.forEach { s ->
-                        DropdownMenuItem(text = { Text(s) }, onClick = {
-                            season = s
-                            seasonExpanded = false
-                        })
+                ExposedDropdownMenu(
+                    expanded = seasonExpanded,
+                    onDismissRequest = { seasonExpanded = false }
+                ) {
+                    seasons.forEach { season ->
+                        DropdownMenuItem(
+                            text = { Text(season) },
+                            onClick = {
+                                selectedSeason = season
+                                seasonExpanded = false
+                            }
+                        )
                     }
                 }
             }
@@ -91,13 +108,9 @@ fun CropDetailsScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
 
             Button(
                 onClick = onNextClick,
-                enabled = isNextEnabled,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isNextEnabled) Color(0xFF4F7F3B) else Color(0xFFA5D6A7),
-                    disabledContainerColor = Color(0xFFA5D6A7)
-                )
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F7F3B))
             ) {
                 Text("Next: Sowing Details")
             }

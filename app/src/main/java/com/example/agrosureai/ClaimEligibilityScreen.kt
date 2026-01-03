@@ -62,7 +62,7 @@ fun ClaimEligibilityScreen(onCompleteRequirements: () -> Unit, onBackClick: () -
                 colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD))
             ) {
                 Column(
-                    modifier = Modifier.padding(24.dp).fillMaxWidth(),
+                    modifier = Modifier.padding(vertical = 24.dp, horizontal = 24.dp).fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(Icons.Default.Shield, contentDescription = "Check Eligibility", tint = Color(0xFF1565C0), modifier = Modifier.size(48.dp))
@@ -118,7 +118,7 @@ fun ClaimEligibilityScreen(onCompleteRequirements: () -> Unit, onBackClick: () -
                 onClick = onCompleteRequirements,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFA5D6A7))
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F7F3B)) // Set to the correct dark green color
             ) {
                 Text("Complete Requirements First")
             }

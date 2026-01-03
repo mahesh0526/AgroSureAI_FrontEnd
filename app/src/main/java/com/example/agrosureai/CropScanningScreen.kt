@@ -1,149 +1,156 @@
 package com.example.agrosureai
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.filled.FlipCameraAndroid
+import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.*
 
 @Composable
 fun CropScanningScreen(onImageCaptured: (File) -> Unit, onCancel: () -> Unit) {
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
     var hasCamPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED
-        )
+        mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
     }
-    val launcher = rememberLauncherForActivityResult(
+    val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { granted ->
             hasCamPermission = granted
         }
     )
 
+    // Request permission if it hasn't been granted yet
     LaunchedEffect(key1 = true) {
         if (!hasCamPermission) {
-            launcher.launch(Manifest.permission.CAMERA)
+            permissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
 
-    val imageCapture = remember { ImageCapture.Builder().build() }
-
     if (hasCamPermission) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            AndroidView(
-                factory = { context ->
-                    val previewView = PreviewView(context)
-                    val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
-                    cameraProviderFuture.addListener({
-                        val cameraProvider = cameraProviderFuture.get()
-                        val preview = Preview.Builder().build()
-                        preview.setSurfaceProvider(previewView.surfaceProvider)
-
-                        try {
-                            cameraProvider.unbindAll()
-                            cameraProvider.bindToLifecycle(
-                                lifecycleOwner,
-                                CameraSelector.DEFAULT_BACK_CAMERA,
-                                preview,
-                                imageCapture
-                            )
-                        } catch (e: Exception) {
-                            Log.e("CropScanningScreen", "Camera bind error", e)
-                        }
-                    }, ContextCompat.getMainExecutor(context))
-                    previewView
-                },
-                modifier = Modifier.fillMaxSize()
-            )
-
-            // Viewfinder overlay
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(48.dp)
-                    .border(2.dp, Color.Green)
-            )
-
-            // UI Controls
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .padding(24.dp),
-                horizontalArrangement = Arrangement.SpaceAround,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onCancel) {
-                    Icon(Icons.Filled.Close, contentDescription = "Cancel", tint = Color.White, modifier = Modifier.size(36.dp))
-                }
-                IconButton(onClick = {
-                    takePhoto(context, imageCapture, onImageCaptured)
-                }) {
-                    Icon(Icons.Filled.AddCircle, contentDescription = "Take Photo", tint = Color.Green, modifier = Modifier.size(72.dp))
-                }
-                IconButton(onClick = { /* TODO: Refresh logic */ }) {
-                    Icon(Icons.Filled.Refresh, contentDescription = "Refresh", tint = Color.White, modifier = Modifier.size(36.dp))
-                }
-            }
-        }
+        CameraContent(onImageCaptured = onImageCaptured, onCancel = onCancel)
     } else {
-        // Handle case where permission is not granted
-        // You might want to show a message to the user
+        // You can show a placeholder screen here asking the user to grant permission
+        // For now, it will be a blank screen until permission is granted.
     }
 }
 
-private fun takePhoto(context: Context, imageCapture: ImageCapture, onImageCaptured: (File) -> Unit) {
-    val photoFile = File(
-        context.filesDir,
-        SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.US)
-            .format(System.currentTimeMillis()) + ".jpg"
-    )
 
-    val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+@Composable
+private fun CameraContent(onImageCaptured: (File) -> Unit, onCancel: () -> Unit) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val cameraController = remember { LifecycleCameraController(context) }
+    var cameraSelector by remember { mutableStateOf(CameraSelector.DEFAULT_BACK_CAMERA) }
 
-    imageCapture.takePicture(
-        outputOptions,
-        ContextCompat.getMainExecutor(context),
-        object : ImageCapture.OnImageSavedCallback {
-            override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                onImageCaptured(photoFile)
+    val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            val file = File.createTempFile("gallery_image", ".jpg", context.cacheDir)
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                file.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+            onImageCaptured(file)
+        }
+    }
+
+    LaunchedEffect(cameraSelector) {
+        cameraController.cameraSelector = cameraSelector
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = {
+                PreviewView(it).apply {
+                    this.controller = cameraController
+                    cameraController.bindToLifecycle(lifecycleOwner)
+                }
+            }
+        )
+
+        // Close Button
+        IconButton(onClick = onCancel, modifier = Modifier.align(Alignment.TopStart).padding(16.dp)) {
+            Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+        }
+
+        // Centered UI
+        Column(
+            modifier = Modifier.align(Alignment.Center),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(modifier = Modifier.size(280.dp).border(BorderStroke(2.dp, Color.White)))
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Align crop leaf within the frame", color = Color.White, textAlign = TextAlign.Center)
+        }
+
+        // Bottom Controls
+        Row(
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 64.dp).fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Flip Camera
+            IconButton(onClick = {
+                cameraSelector = if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
+                    CameraSelector.DEFAULT_FRONT_CAMERA
+                } else {
+                    CameraSelector.DEFAULT_BACK_CAMERA
+                }
+            }) {
+                Icon(Icons.Default.FlipCameraAndroid, contentDescription = "Flip Camera", tint = Color.White)
             }
 
-            override fun onError(exc: ImageCaptureException) {
-                Log.e("CropScanningScreen", "Photo capture failed: ${exc.message}", exc)
+            // Capture Button
+            Button(
+                onClick = {
+                    val file = File.createTempFile("crop_image", ".jpg", context.cacheDir)
+                    val outputFileOptions = ImageCapture.OutputFileOptions.Builder(file).build()
+                    cameraController.takePicture(
+                        outputFileOptions,
+                        ContextCompat.getMainExecutor(context),
+                        object : ImageCapture.OnImageSavedCallback {
+                            override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                                onImageCaptured(file)
+                            }
+                            override fun onError(exception: ImageCaptureException) { /* Handle error */ }
+                        }
+                    )
+                },
+                modifier = Modifier.size(80.dp),
+                shape = CircleShape,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F7F3B)),
+                border = BorderStroke(4.dp, Color.White)
+            ) {}
+
+            // Gallery
+            IconButton(onClick = { galleryLauncher.launch("image/*") }) {
+                Icon(Icons.Default.PhotoLibrary, contentDescription = "Open Gallery", tint = Color.White)
             }
         }
-    )
+    }
 }
